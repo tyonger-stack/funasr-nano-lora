@@ -1,0 +1,34 @@
+# E3 三杠杆合体: r=32 + 解冻 audio_adaptor(hybrid) + 郑州伪标注数据(v2)
+# 对照: E1(r16 纯LoRA, 61.3万条) → 河南 8.88% / AISHELL 1.63%(全量)
+name: "henan-aishell-e3"
+output_dir: "outputs/lora-nano"
+
+model_config:
+  base_dir: "weights/fun-asr-nano-mlx/fp16"
+
+data_config:
+  data_file: "/Users/Apple/Documents/FunAsr/data/train_v2.jsonl"   # 625,862 条(含郑州 13,159)
+
+lora_config:
+  r: 32
+  lora_alpha: 64          # 保持 scale=2 与官方 r16/α32 一致
+  dropout: 0.05
+  target_modules: ["q_proj", "v_proj"]
+
+hybrid_config:
+  unfreeze_audio_adaptor: true   # +12.6M 可训练参数(fp32), 官方 <1000h 档建议路径
+
+training_args:
+  learning_rate: 1.0e-4
+  lr_scheduler_type: cosine
+  weight_decay: 0.01
+  max_steps: 19560          # ≈1.0 epoch(625,862 / 32)
+  warmup_steps: 200
+  logging_steps: 50
+  save_steps: 1000
+  save_total_limit: 25
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 16
+  max_grad_norm: 1.0
+  grad_norm_skip: 100
+  seed: 1885

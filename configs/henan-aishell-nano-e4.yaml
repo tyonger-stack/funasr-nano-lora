@@ -1,0 +1,32 @@
+# E4: 抄服务端 qwen v1(allQKVO+Projector)配方, Nano 版
+# 对照: E1(q/v r16α32, 8.88%) | E3(r32+hybrid整解冻+郑州, 中止@17k, @300~9.5%)
+name: "henan-aishell-e4"
+output_dir: "outputs/lora-nano"
+
+model_config:
+  base_dir: "weights/fun-asr-nano-mlx/fp16"
+
+data_config:
+  data_file: "/Users/Apple/datasets/asr-mix/train/metadata.jsonl"   # 去郑州, 纯 asr-mix 612,703
+
+lora_config:
+  r: 16
+  lora_alpha: 16          # scale=1, 与服务端一致
+  dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]   # allQKVO
+  adaptor_projector: true   # audio_adaptor.linear1/2 挂 LoRA(服务端 multi_modal_projector 同位)
+
+training_args:
+  learning_rate: 1.0e-4
+  lr_scheduler_type: cosine
+  weight_decay: 0.01
+  max_steps: 19200          # ≈1.0 epoch
+  warmup_steps: 600         # 服务端同款 3%
+  logging_steps: 50
+  save_steps: 1000
+  save_total_limit: 25
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 16
+  max_grad_norm: 1.0
+  grad_norm_skip: 100
+  seed: 1886
